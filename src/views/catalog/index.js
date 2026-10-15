@@ -110,7 +110,7 @@ export async function renderCatalogView(queryParams = new URLSearchParams()) {
 
         renderPaginationControls(container, totalCount, page);
 
-      } catch (err) {
+      } catch {
         resultsCountEl.textContent = '0 juegos encontrados';
         grid.innerHTML = `
           <div class="error-state">

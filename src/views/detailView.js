@@ -17,6 +17,7 @@ function sanitizeHref(url) {
 // además se eliminan comillas, paréntesis y caracteres de control que cerrarían
 // la cadena CSS (una URL de imagen de la API no necesita ninguno de ellos).
 function sanitizeCSSUrl(url) {
+  // eslint-disable-next-line no-control-regex -- rango de control intencionado: es la defensa de la cadena CSS
   return escapeHTML(String(url || '').replace(/['"()\\\s<>\u0000-\u001F]/g, ''));
 }
 
@@ -179,7 +180,7 @@ export async function renderDetailView(queryParams) {
         </aside>
       </section>
     `;
-  } catch (error) {
+  } catch {
     container.innerHTML = `<div class="error-state"><p>Error al obtener la información del juego.</p><a href="#/" class="back-btn">Volver</a></div>`;
   }
 
