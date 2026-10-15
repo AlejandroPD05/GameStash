@@ -40,11 +40,21 @@ style.css             Sistema completo de estilos
 src/
   main.js             Bootstrap + toggle de tema (localStorage)
   router.js           Router por hash: #/ , #/catalog , #/game
-  api.js              Cliente fetch contra RAWG (+ filtro de contenido adulto)
+  api.js              Cliente fetch contra RAWG (+ filtro de contenido adulto
+                      + AbortController para cancelar peticiones en vuelo)
   animations.js       GSAP: "loot drop" y tilt 3D
   services/           Traducción al español
+  utils/
+    escapeHTML.js     Escapado de datos externos para innerHTML
+    sanitizeRichText.js  Descripciones con formato seguro (<p>/<br>)
   views/
-    catalogView.js    Catálogo: filtros, chips, paginación, grid/lista
+    catalog/          Catálogo dividido por responsabilidades:
+      index.js        Orquestador de la vista (lo que hace el fetch y monta la página)
+      constants.js    Géneros, plataformas, opciones de orden, tamaños
+      filters.js      Chips multiselect + dropdowns custom + sugerencias
+      pagination.js   Ventana de páginas y controles de paginación
+      gameCard.js     Render de tarjeta + layout grid/lista
+      state.js        Estado de la vista (modo grid/lista, filtros → URL)
     detailView.js     Ficha de juego
 ```
 
@@ -60,12 +70,11 @@ funciona de verdad.
 - Skeletons durante la carga, estado vacío y estado de error
 - Sistema de rareza (legendario / épico / raro) como toque gamificado
 - Tema oscuro/claro persistente
-- `escapeHTML()` en el render de datos externos
+- `escapeHTML()` en el render de datos externos (catálogo **y** ficha), con
+  sanitizado de la descripción que conserva `<p>`/`<br>` pero sin atributos
 - Filtro de contenido adulto por título y tags, más `sfw=true` en la API
 
 ## Roadmap conocido
 
-- Dividir `catalogView.js` en `filters/`, `components/` y `catalogState`
-- `AbortController` para cancelar peticiones al navegar rápido
 - Proxy serverless que oculte la API key (tradeoff real de seguridad en SPA)
 - ESLint + CI con build

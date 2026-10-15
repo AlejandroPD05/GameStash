@@ -1,5 +1,24 @@
 import { getGameDetails, getGameStores } from '../api.js';
 import { translateToSpanish } from '../services/translator.js';
+import { escapeHTML } from '../utils/escapeHTML.js';
+import { sanitizeRichText } from '../utils/sanitizeRichText.js';
+
+// Las URLs de tiendas salen de la API: solo se aceptan http(s) para que un
+// `javascript:` (u otro esquema peligroso) no se convierta en XSS al hacer
+// clic. El resto del dato se escapa con escapeHTML al interpolarlo.
+function sanitizeHref(url) {
+  const value = String(url || '').trim();
+  return /^https?:\/\//i.test(value) ? value : '#';
+}
+
+// `bgImage` se inyecta dentro de url('...') en un atributo style. escapeHTML()
+// impide romper el atributo HTML, pero las entidades se decodifican al parsear
+// el documento, de modo que el navegador vuelve a ver comillas reales: por eso
+// además se eliminan comillas, paréntesis y caracteres de control que cerrarían
+// la cadena CSS (una URL de imagen de la API no necesita ninguno de ellos).
+function sanitizeCSSUrl(url) {
+  return escapeHTML(String(url || '').replace(/['"()\\\s<>\u0000-\u001F]/g, ''));
+}
 
 function getStoreSvgIcon(slug, url = '') {
   const s = slug.toLowerCase();
@@ -100,6 +119,9 @@ export async function renderDetailView(queryParams) {
       getGameStores(gameId)
     ]);
 
+    // La descripción puede traer HTML de RAWG (<p>/<br>) o texto plano según
+    // el campo disponible y si el traductor ha fallado: se sanitiza manteniendo
+    // solo el formato legítimo (ver utils/sanitizeRichText.js para la decisión).
     const rawDescription = game.description_raw || game.description || '';
     const descriptionES = rawDescription ? await translateToSpanish(rawDescription) : 'Sin descripción disponible.';
 
@@ -107,14 +129,14 @@ export async function renderDetailView(queryParams) {
 
     const storesHTML = resolvedStores.length > 0
       ? resolvedStores.map(store => `
-          <a href="${store.url}" target="_blank" rel="noopener noreferrer" class="store-button" title="Ir a ${store.name}">
+          <a href="${escapeHTML(sanitizeHref(store.url))}" target="_blank" rel="noopener noreferrer" class="store-button" title="Ir a ${escapeHTML(store.name)}">
             <span class="store-icon">${store.icon}</span>
-            <span>${store.name}</span>
+            <span>${escapeHTML(store.name)}</span>
           </a>
         `).join('')
       : '<p class="no-data">No hay enlaces directos a tiendas disponibles.</p>';
 
-    const bgImage = game.background_image_additional || game.background_image || '';
+    const bgImage = sanitizeCSSUrl(game.background_image_additional || game.background_image || '');
 
     container.innerHTML = `
       <article class="game-detail-hero" style="${bgImage ? `background-image: linear-gradient(to bottom, rgba(0,0,0,0.4), var(--bg-main)), url('${bgImage}')` : 'background: var(--bg-card)'}">
@@ -123,11 +145,11 @@ export async function renderDetailView(queryParams) {
           Volver al Stash
         </a>
         <div class="hero-info">
-          <h1>${game.name || 'Sin título'}</h1>
+          <h1>${escapeHTML(game.name || 'Sin título')}</h1>
           <div class="meta-tags">
-            <span>Lanzamiento: ${game.released || 'N/A'}</span>
-            <span>Metacritic: ${game.metacritic || 'N/A'}</span>
-            <span>Rating: ${game.rating ? `${game.rating} / 5` : 'N/A'}</span>
+            <span>Lanzamiento: ${escapeHTML(game.released || 'N/A')}</span>
+            <span>Metacritic: ${escapeHTML(game.metacritic || 'N/A')}</span>
+            <span>Rating: ${escapeHTML(game.rating ? `${game.rating} / 5` : 'N/A')}</span>
           </div>
         </div>
       </article>
@@ -135,7 +157,7 @@ export async function renderDetailView(queryParams) {
       <section class="detail-body">
         <div class="description">
           <h2>Descripción</h2>
-          <p>${descriptionES}</p>
+          <p>${sanitizeRichText(descriptionES)}</p>
 
           <div class="stores-section">
             <h3>Conseguir copia (Tiendas Oficiales)</h3>
@@ -147,13 +169,13 @@ export async function renderDetailView(queryParams) {
         
         <aside class="sidebar">
           <h3>Plataformas</h3>
-          <ul>${game.platforms && game.platforms.length > 0 ? game.platforms.map(p => `<li>${p.platform.name}</li>`).join('') : '<li class="no-data">N/A</li>'}</ul>
+          <ul>${game.platforms && game.platforms.length > 0 ? game.platforms.map(p => `<li>${escapeHTML(p.platform.name)}</li>`).join('') : '<li class="no-data">N/A</li>'}</ul>
           
           <h3>Desarrolladores</h3>
-          <ul>${game.developers && game.developers.length > 0 ? game.developers.map(d => `<li>${d.name}</li>`).join('') : '<li class="no-data">N/A</li>'}</ul>
+          <ul>${game.developers && game.developers.length > 0 ? game.developers.map(d => `<li>${escapeHTML(d.name)}</li>`).join('') : '<li class="no-data">N/A</li>'}</ul>
 
           <h3>Géneros</h3>
-          <ul>${game.genres && game.genres.length > 0 ? game.genres.map(g => `<li>${g.name}</li>`).join('') : '<li class="no-data">N/A</li>'}</ul>
+          <ul>${game.genres && game.genres.length > 0 ? game.genres.map(g => `<li>${escapeHTML(g.name)}</li>`).join('') : '<li class="no-data">N/A</li>'}</ul>
         </aside>
       </section>
     `;

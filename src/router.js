@@ -1,4 +1,4 @@
-import { renderCatalogView } from './views/catalogView.js';
+import { renderCatalogView } from './views/catalog/index.js';
 import { renderDetailView } from './views/detailView.js';
 
 const routes = {
