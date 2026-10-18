@@ -77,6 +77,9 @@ export function renderFiltersHTML({
             id="search-input" 
             placeholder="Buscar un juego (ej. Zelda, Cyberpunk, Elden Ring)..." 
             value="${escapeHTML(searchQuery)}"
+            maxlength="80"
+            autocomplete="off"
+            spellcheck="false"
           />
           <button type="submit" aria-label="Buscar">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -90,7 +93,7 @@ export function renderFiltersHTML({
             </div>
 
             <div class="genre-search-input-box" id="genre-search-wrapper">
-              <input type="text" id="genre-search-input" autocomplete="off" placeholder="+ Buscar/añadir otro género (Enter)..." />
+              <input type="text" id="genre-search-input" autocomplete="off" spellcheck="false" maxlength="40" placeholder="+ Buscar/añadir otro género (Enter)..." />
               <div class="genre-suggestions-dropdown" id="genre-suggestions-menu" role="listbox"></div>
             </div>
           </div>

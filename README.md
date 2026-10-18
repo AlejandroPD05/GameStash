@@ -10,7 +10,7 @@ enrutado dinámico **escrito a mano, sin frameworks**.
 
 | Capa | Tecnología |
 |---|---|
-| Build | Vite 5 |
+| Build | Vite 8 |
 | Lógica | JavaScript ES modules (sin framework) |
 | Animaciones | GSAP (CDN) |
 | Datos | RAWG API |
@@ -74,7 +74,16 @@ funciona de verdad.
   sanitizado de la descripción que conserva `<p>`/`<br>` pero sin atributos
 - Filtro de contenido adulto por título y tags, más `sfw=true` en la API
 
+## Seguridad
+
+- **Clave de RAWG**: vive en `.env` (nunca versionado) y viaja al navegador al compilar; es el tradeoff inherente a las SPA client-side. Usa una clave con restricciones de dominio y rótala si se filtra. (Ocultarla de verdad requiere el proxy serverless del roadmap).
+- **Sin backend**: no hay servidor propio ni base de datos; el estado vive en el navegador.
+- **Escapado**: todo dato externo (RAWG, parámetros de la URL, entradas del usuario) pasa por `escapeHTML`/`sanitizeRichText` antes de tocar el DOM.
+- **Cabeceras y CSP** (`vercel.json`): `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` y `Content-Security-Policy` (scripts propios + cdnjs para GSAP; conexiones solo a RAWG y al traductor; imágenes solo de RAWG). Verificada contra el build real: 0 violaciones.
+- **GSAP con SRI**: el script del CDN se valida con `integrity` (sha512) y `crossorigin`.
+- **Buscadores**: longitud limitada (`maxlength`).
+- **Dependencias**: `npm audit` sin vulnerabilidades.
+
 ## Roadmap conocido
 
 - Proxy serverless que oculte la API key (tradeoff real de seguridad en SPA)
-- ESLint + CI con build
