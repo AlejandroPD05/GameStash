@@ -40,23 +40,26 @@ export async function getGames({
   const controller = beginRequest('games');
 
   try {
-    let url = `${BASE_URL}/games?key=${API_KEY}&page=${page}&page_size=${pageSize}&ordering=${ordering}&sfw=true`;
-    
-    if (search) {
-      url += `&search=${encodeURIComponent(search)}`;
-    }
-    if (genres) {
-      url += `&genres=${genres}`;
-    }
-    if (platforms) {
-      url += `&platforms=${platforms}`;
-    }
-    if (parent_platforms) {
-      url += `&parent_platforms=${parent_platforms}`;
-    }
-    if (dates) {
-      url += `&dates=${dates}`;
-    }
+    // Cada valor se codifica por separado. Las listas (géneros, plataformas,
+    // fechas) conservan sus comas literales, que RAWG usa como separador, y
+    // ningún filtro procedente del hash puede inyectar parámetros extra.
+    const encodeList = value => String(value).split(',').map(encodeURIComponent).join(',');
+
+    const queryParts = [
+      `key=${encodeURIComponent(API_KEY ?? '')}`,
+      `page=${encodeURIComponent(String(page))}`,
+      `page_size=${encodeURIComponent(String(pageSize))}`,
+      `ordering=${encodeURIComponent(ordering)}`,
+      'sfw=true'
+    ];
+
+    if (search) queryParts.push(`search=${encodeURIComponent(search)}`);
+    if (genres) queryParts.push(`genres=${encodeList(genres)}`);
+    if (platforms) queryParts.push(`platforms=${encodeList(platforms)}`);
+    if (parent_platforms) queryParts.push(`parent_platforms=${encodeList(parent_platforms)}`);
+    if (dates) queryParts.push(`dates=${encodeList(dates)}`);
+
+    const url = `${BASE_URL}/games?${queryParts.join('&')}`;
 
     const response = await fetch(url, { signal: controller.signal });
     if (!response.ok) throw new Error('Error al conectar con RAWG API');
@@ -91,7 +94,7 @@ export async function getGameDetails(id) {
   const controller = beginRequest('details');
 
   try {
-    const response = await fetch(`${BASE_URL}/games/${id}?key=${API_KEY}`, { signal: controller.signal });
+    const response = await fetch(`${BASE_URL}/games/${encodeURIComponent(id)}?key=${API_KEY}`, { signal: controller.signal });
     if (!response.ok) throw new Error(`No se pudo obtener el juego ${id}`);
     return await response.json();
   } catch (error) {
@@ -106,7 +109,7 @@ export async function getGameStores(id) {
   const controller = beginRequest('stores');
 
   try {
-    const response = await fetch(`${BASE_URL}/games/${id}/stores?key=${API_KEY}`, { signal: controller.signal });
+    const response = await fetch(`${BASE_URL}/games/${encodeURIComponent(id)}/stores?key=${API_KEY}`, { signal: controller.signal });
     if (!response.ok) throw new Error(`No se pudieron obtener las tiendas del juego ${id}`);
     return await response.json();
   } catch (error) {

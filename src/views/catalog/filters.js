@@ -154,7 +154,10 @@ export function initFilters(container) {
   checkActiveFiltersState(container);
 
   function addGenreChipAndSearch(slug, label) {
-    let existingChip = genreChipsContainer.querySelector(`.genre-chip[data-genre="${slug}"]`);
+    // Se busca sobre la lista en vez de interpolar un selector: un slug con
+    // comillas o corchetes haría fallar a querySelector con un SyntaxError.
+    let existingChip = Array.from(genreChipsContainer.querySelectorAll('.genre-chip'))
+      .find(chip => chip.dataset.genre === slug);
 
     if (!existingChip) {
       const newChip = document.createElement('button');
